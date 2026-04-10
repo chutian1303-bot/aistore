@@ -1,55 +1,50 @@
-# JNBY AI 店铺 · 演示 Demo
+# JNBY AI 店铺手机端 Demo
 
-## 部署到 GitHub Pages（5分钟）
+这是一个可手机演示的 H5，并已接入服务端代理架构：
 
-### 步骤
+- 前端：`index.html` + `styles.css` + `app.js`
+- 后端代理：`api/chat.js`（调用 Minimax OpenAI 兼容接口）
+- 设计参考：`source-journey.html`
 
-1. **新建仓库**
-   - 登录 GitHub（chutian1303-bot）
-   - 点击右上角 `+` → `New repository`
-   - 仓库名填：`jnby-ai-demo`
-   - 选 `Public`，点击 `Create repository`
+## 已实现能力
 
-2. **上传文件**
-   - 进入新建的仓库
-   - 点击 `Add file` → `Upload files`
-   - 把 `index.html` 拖进去
-   - 点击 `Commit changes`
+- 底部输入框常驻
+- 输入框上方推荐意图
+- 商品详情以浮层打开（不跳页）
+- 详情态推荐意图切换（尺码、AI试衣、优惠等）
+- 关闭详情后在输入框上方左侧显示 `店内足迹` 入口
+- 调用 `/api/chat` 失败时自动回退本地模拟逻辑
 
-3. **开启 GitHub Pages**
-   - 进入仓库 `Settings`
-   - 左侧找 `Pages`
-   - Source 选 `Deploy from a branch`
-   - Branch 选 `main`，目录选 `/ (root)`
-   - 点击 `Save`
+## 本地运行（仅前端）
 
-4. **等待 1-2 分钟后访问**
-   - 地址：`https://chutian1303-bot.github.io/jnby-ai-demo/`
+```bash
+cd "/Users/headplus/Documents/New project"
+python3 -m http.server 8080
+```
 
-5. **生成二维码**
-   - 把上面的地址粘贴到 [草料二维码](https://cli.im/) 生成二维码
-   - 打印或展示给客户扫码体验
+访问：
 
----
+- `http://localhost:8080`
 
-## 体验路径建议
+说明：`python http.server` 不会运行 `api/chat.js`，因此本地会走前端模拟回复（这是预期行为）。
 
-给客户演示时，可以按这个顺序引导：
+## 公网部署（推荐：Vercel）
 
-1. **进店** → 看 anna 的欢迎语 + 新品推荐
-2. **向下滑动** → 体验店招折叠、吸顶效果
-3. **点击商品** → 查看详情浮层（推荐理由、尺码、搭配）
-4. **在输入框提问** → 试试这几句话：
-   - "帮我找适合通勤的外套"
-   - "有什么优惠"
-   - "给我推荐一套穿搭"
-5. **点击「商品足迹」** → 查看浏览过的商品
-6. **点击「历史消息」** → 查看问过的所有问题
+`api/chat.js` 是服务端函数，建议部署到 Vercel（不要用 GitHub Pages，它只支持静态页面）。
 
----
+1. 把代码推到 GitHub 仓库。
+2. 打开 [Vercel](https://vercel.com/) 并导入该 GitHub 仓库。
+3. 在 Vercel 项目里配置环境变量：
 
-## 注意事项
+- `MINIMAX_API_KEY` = 你的 Minimax Key
+- `MINIMAX_BASE_URL` = `https://api.minimaxi.com/v1`
+- `MINIMAX_MODEL` = `MiniMax-M2.5`
 
-- API Key 已内嵌在代码中，仅供演示使用
-- 如遇 API 无法连接，系统会自动切换到预设回复，演示效果不受影响
-- 建议在 WiFi 环境下体验，图片加载更快
+4. 点击 Deploy，等待完成后会得到公网 URL。
+5. 用二维码工具把该 URL 生成二维码，客户即可手机扫码体验。
+
+## 安全注意事项
+
+- API Key 必须只放在部署平台环境变量中，不能写进前端代码或仓库。
+- 建议保留 `.gitignore` 中的 `.env` / `.env.local`。
+
