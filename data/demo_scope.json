@@ -1,0 +1,14 @@
+{
+  "updated_at": "2026-04-11T20:55:00+08:00",
+  "project": "Apple 设备店铺 AI Demo",
+  "scope_option": 1,
+  "scope_definition": "Apple 中国官网当前在售全量设备（iPhone、iPad、Mac、Watch、AirPods、HomePod、Vision）",
+  "demo_mode": true,
+  "copyright_restriction": false,
+  "asset_size_limit": false,
+  "notes": [
+    "仅用于客户演示",
+    "知识库内容优先来自 Apple 官网公开页面",
+    "AI 回复基于本地 apple_kb.json 与 apple_products.json"
+  ]
+}

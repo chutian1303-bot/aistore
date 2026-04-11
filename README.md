@@ -1,17 +1,26 @@
-# JNBY AI 店铺手机端 Demo
+# Apple 设备店铺手机端 Demo
 
 这是一个可手机演示的 H5，并已接入服务端代理架构：
 
 - 前端：`index.html` + `styles.css` + `app.js`
 - 后端代理：`api/chat.js`（调用 Minimax OpenAI 兼容接口）
 - 设计参考：`source-journey.html`
+- 范围约束：`data/demo_scope.json`
+- 知识库：`data/apple_kb.json`、`data/apple_products.json`
+
+## 当前演示范围（已锁定）
+
+- `scope_option = 1`
+- 范围：Apple 中国官网当前在售全量设备（iPhone / iPad / Mac / Watch / AirPods / HomePod / Vision）
+- 用途：仅 demo 演示
+- 约束：不限制版权素材与体积
 
 ## 已实现能力
 
 - 底部输入框常驻
 - 输入框上方推荐意图
 - 商品详情以浮层打开（不跳页）
-- 详情态推荐意图切换（尺码、AI试衣、优惠等）
+- 详情态推荐意图切换（参数、AI 对比、购买建议等）
 - 关闭详情后在输入框上方左侧显示 `店内足迹` 入口
 - 调用 `/api/chat` 失败时自动回退本地模拟逻辑
 
@@ -47,4 +56,3 @@ python3 -m http.server 8080
 
 - API Key 必须只放在部署平台环境变量中，不能写进前端代码或仓库。
 - 建议保留 `.gitignore` 中的 `.env` / `.env.local`。
-

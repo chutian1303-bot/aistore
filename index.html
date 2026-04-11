@@ -3,110 +3,119 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>JNBY AI 店铺 Demo</title>
+  <title>Apple 设备店铺 Demo</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
-  <div class="page-bg"></div>
-  <div class="demo-shell">
+  <div class="app-wrap">
     <div class="phone" id="phoneApp">
-      <header class="store-header">
-        <div class="brand-logo">JNBY</div>
-        <div class="brand-content">
-          <div class="store-name">JNBY 江南布衣 AI 店铺</div>
-          <div class="store-sub" id="storeSub">欢迎进店，已为你准备本周新品推荐</div>
+      <header class="bbar">
+        <div class="bbar-inner">
+          <div class="logo">APPLE</div>
+          <div class="btext">
+            <div class="brow1">
+              <span class="bname">Apple 官方设备体验店</span>
+              <span class="bdot">·</span>
+              <span class="bmeta">⭐4.9</span>
+              <span class="bdot">·</span>
+              <span class="bmeta">官方数据知识库</span>
+            </div>
+            <div class="brow2">
+              <span class="btag hi">Apple 中国官网</span>
+              <span class="btag">在售设备</span>
+              <span class="btag">参数速览</span>
+            </div>
+          </div>
         </div>
       </header>
 
-      <main class="feed-scroll" id="feedScroll">
-        <section class="welcome-card">
-          <div class="welcome-title">欢迎来到品牌智能店铺</div>
-          <p class="welcome-text" id="welcomeText">
-            你好，欢迎进店。我是你的 AI 导购 Anna，结合进店上下文，我先给你整理了新品和高匹配款。
-          </p>
-          <div class="welcome-kpis">
-            <span>新品 28 款</span>
-            <span>高匹配 12 款</span>
-            <span>专属优惠 2 张</span>
-          </div>
-        </section>
-
-        <section class="canvas-stack" id="canvasStack"></section>
-
-        <section class="feed-section">
-          <div class="section-head-row">
-            <h2>沉浸浏览 · 双列商品 Feeds</h2>
-            <span id="feedMeta">持续更新中</span>
-          </div>
-          <div class="feed-grid" id="feedGrid"></div>
+      <main class="canvas-stage" id="canvasStage">
+        <section class="canvas-area" aria-label="canvas">
+          <div class="conversation-stream" id="conversationStream"></div>
         </section>
       </main>
 
       <section class="detail-overlay" id="detailOverlay" aria-hidden="true">
-        <div class="detail-topbar">
-          <button class="ghost-btn" id="detailCloseBtn" type="button">关闭</button>
-          <div class="detail-grabber"></div>
-          <button class="ghost-btn" id="detailAiBtn" type="button">AI 试衣</button>
+        <div class="ov-top">
+          <button class="ov-back-btn" id="detailCloseBtn" type="button" aria-label="返回">‹</button>
+          <div class="ov-handle"></div>
+          <div class="ov-top-spacer" aria-hidden="true"></div>
         </div>
-        <div class="detail-scroll">
-          <div class="detail-image" id="detailImage">
+
+        <div class="ov-scroll">
+          <div class="prod-img" id="detailImage">
             <span id="detailImageLabel">商品图</span>
+            <button class="detail-tryon-btn" id="detailAiBtn" type="button">AI 对比</button>
           </div>
-          <div class="detail-body">
-            <div class="detail-price-row">
-              <span class="price-main" id="detailPrice">¥0</span>
-              <span class="price-tag" id="detailTag">新品</span>
-            </div>
-            <h3 id="detailName">商品名称</h3>
-            <p class="detail-desc" id="detailDesc"></p>
 
-            <div class="insight-card">
-              <div class="insight-title">用户相关信息</div>
-              <p id="detailInsight">根据你最近浏览和购买记录，推荐你优先看 S 码与卡其色。</p>
+          <div class="ov-body">
+            <h3 class="prod-name" id="detailName">商品名称</h3>
+            <div class="service-tags" aria-label="服务保障">
+              <span class="service-tag">包邮</span>
+              <span class="service-tag">7天无理由退换货</span>
+              <span class="service-tag">正品保障</span>
+              <span class="service-tag">极速退款</span>
             </div>
 
-            <div class="size-block">
-              <div class="block-title">尺码建议</div>
-              <div class="size-row" id="sizeRow">
-                <span>XS</span><span class="active">S</span><span>M</span><span>L</span>
+            <div class="anna-card">
+              <div class="ac-h">
+                <div class="ac-ava">A</div>
+                <span class="ac-nm">anna 说</span>
+                <span class="ac-lb">专属推荐</span>
               </div>
+              <div class="ac-rec" id="detailInsight">我会基于 Apple 中国官网在售信息，为你解释参数并推荐更合适的机型。</div>
             </div>
 
-            <div class="bundle-block">
-              <div class="block-title">搭配建议</div>
-              <div class="bundle-list" id="bundleList"></div>
+            <div class="sec-t">参数速览</div>
+            <div class="size-row" id="sizeRow">
+              <span class="sz">芯片</span>
+              <span class="sz rec">显示</span>
+              <span class="sz">影像</span>
+              <span class="sz">续航</span>
             </div>
+            <div class="size-note" id="sizeNote">以下信息来自 Apple 中国官网公开技术规格。</div>
+
+            <div class="sec-t">相关设备</div>
+            <div class="bundle-list" id="bundleList"></div>
           </div>
         </div>
 
         <div class="buy-bar">
-          <div>
-            <div class="buy-price" id="buyPrice">¥0</div>
-            <div class="buy-sub">支持 7 天无理由</div>
+          <div class="buy-price-wrap">
+            <span class="buy-price-main" id="buyPrice">¥0</span>
+            <div class="buy-price-sub">
+              <span class="buy-price-old">¥2,100</span>
+              <span class="buy-price-badge">店铺红包优惠20元</span>
+            </div>
           </div>
-          <div class="buy-actions">
-            <button class="btn-secondary" type="button">加入购物车</button>
-            <button class="btn-primary" type="button">立即购买</button>
+          <div class="buy-bar-inner">
+            <button class="buy-btn add" type="button">加入购物车</button>
+            <button class="buy-btn now" type="button">立即购买</button>
           </div>
         </div>
       </section>
 
       <section class="history-sheet" id="historySheet" aria-hidden="true">
         <div class="sheet-head">
-          <span>店内足迹</span>
+          <span id="historyTitle">商品足迹</span>
           <button id="historyCloseBtn" class="ghost-btn" type="button">收起</button>
         </div>
         <div class="sheet-list" id="historyList"></div>
       </section>
 
-      <footer class="assistant-dock">
-        <div class="intent-strip" id="intentStrip"></div>
+      <footer class="bbot" id="assistantDock">
+        <div class="chips-row" id="intentStrip"></div>
         <div class="input-row">
-          <input id="intentInput" type="text" placeholder="在店内随时提问：找商品、问优惠、要搭配..." autocomplete="off">
-          <button id="sendBtn" class="send-btn" type="button">发送</button>
+          <input id="intentInput" class="input-field" type="text" placeholder="anna 在线，可以问我任何问题" autocomplete="off">
+          <button id="sendBtn" class="send-btn" type="button" aria-label="发送">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <line x1="12" y1="19" x2="12" y2="5"></line>
+              <polyline points="5 12 12 5 19 12"></polyline>
+            </svg>
+          </button>
         </div>
       </footer>
     </div>

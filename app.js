@@ -1,72 +1,63 @@
-const homeIntents = ['进店看新品', '帮我找优惠', '通勤穿搭推荐', '帮我找风衣'];
-const detailIntents = ['尺码推荐', 'AI试衣建议', '搭配这件商品', '怎么买更划算'];
+const homeIntents = ['进店看新品', '帮我选 iPhone', '帮我找 Mac', '我要降噪耳机'];
+const detailIntents = ['参数解读', '同类对比', '适合人群', '购买建议'];
+const fixedIntents = ['商品足迹', '历史消息'];
 
-const products = [
+const fallbackProducts = [
   {
-    id: 'p1',
-    name: '亚麻解构西装外套',
-    price: 1580,
-    tag: 'NEW',
-    color: '#e7dfd1',
-    desc: '亚麻混纺材质，轻量透气，适合春夏通勤与轻户外。'
+    id: 'iphone-fallback-17-pro',
+    category: 'iphone',
+    name: 'iPhone 17 Pro',
+    tag: 'iPhone',
+    price: '官网可选配置',
+    desc: '新一代 iPhone Pro 机型，主打更强影像和性能。',
+    image: 'https://www.apple.com/v/iphone-17-pro/e/images/meta/iphone-17-pro_overview__eumhhclcpuaa_og.png?202603260044',
+    buyUrl: 'https://www.apple.com.cn/cn/shop/goto/buy_iphone/iphone_17_pro',
+    detailUrl: 'https://www.apple.com.cn/iphone-17-pro/',
+    specsUrl: 'https://www.apple.com.cn/iphone-17-pro/specs/',
+    parameters: []
   },
   {
-    id: 'p2',
-    name: 'LESS 立领短夹克',
-    price: 1680,
-    tag: '热卖',
-    color: '#d4c9ba',
-    desc: '立领廓形，适合叠穿，兼顾通勤和休闲场景。'
+    id: 'ipad-fallback-air',
+    category: 'ipad',
+    name: 'iPad Air',
+    tag: 'iPad',
+    price: '官网可选配置',
+    desc: '轻薄机身与高性能芯片结合，适合学习与创作。',
+    image: 'https://www.apple.com/v/ipad-air/ah/images/meta/ipad-air_overview__bc2fd15uec0y_og.png?202603292059',
+    buyUrl: 'https://www.apple.com.cn/cn/shop/goto/buy_ipad/ipad_air',
+    detailUrl: 'https://www.apple.com.cn/ipad-air/',
+    specsUrl: 'https://www.apple.com.cn/ipad-air/specs/',
+    parameters: []
   },
   {
-    id: 'p3',
-    name: '不规则下摆连衣裙',
-    price: 1980,
-    tag: 'NEW',
-    color: '#cfc6b6',
-    desc: '不规则剪裁提升层次感，日常出街更有辨识度。'
+    id: 'mac-fallback-air',
+    category: 'mac',
+    name: 'MacBook Air',
+    tag: 'Mac',
+    price: '官网可选配置',
+    desc: '轻薄便携，续航持久，适合日常办公与学习。',
+    image: 'https://www.apple.com/v/macbook-air/v/images/meta/macbook-air_overview__f4p7jv8hkg66_og.png?202603190127',
+    buyUrl: 'https://www.apple.com.cn/cn/shop/goto/buy_mac/macbook_air',
+    detailUrl: 'https://www.apple.com.cn/macbook-air/',
+    specsUrl: 'https://www.apple.com.cn/macbook-air/specs/',
+    parameters: []
   },
   {
-    id: 'p4',
-    name: 'LESS 春季薄风衣',
-    price: 1380,
-    tag: '同风格',
-    color: '#dad2c5',
-    desc: '轻薄防风，版型利落，适合早春温差天气。'
-  },
-  {
-    id: 'p5',
-    name: '宽松针织开衫',
-    price: 1280,
-    tag: '通勤',
-    color: '#cec4b6',
-    desc: '柔软针织面料，版型宽松，搭配衬衫或连衣裙都合适。'
-  },
-  {
-    id: 'p6',
-    name: '天丝衬衫连衣裙',
-    price: 1480,
-    tag: '预售',
-    color: '#c7bcaf',
-    desc: '天丝面料垂感好，通勤与周末场景切换自然。'
-  },
-  {
-    id: 'p7',
-    name: '高腰亚麻阔腿裤',
-    price: 1080,
-    tag: '搭配',
-    color: '#ddd5c8',
-    desc: '高腰阔腿版型，显腿长，适配多种上装。'
-  },
-  {
-    id: 'p8',
-    name: '拼接设计印花T恤',
-    price: 580,
-    tag: '优惠',
-    color: '#e4ddd0',
-    desc: '印花拼接设计，单穿或内搭都能提升视觉重点。'
+    id: 'airpods-fallback-pro',
+    category: 'airpods',
+    name: 'AirPods Pro 3',
+    tag: 'AirPods',
+    price: '官网可选配置',
+    desc: '支持主动降噪与通透模式，适合通勤和差旅。',
+    image: 'https://www.apple.com/v/airpods-pro/r/images/meta/og__c0ceegchesom_overview.png?202604010850',
+    buyUrl: 'https://www.apple.com.cn/cn/shop/goto/buy_airpods/airpods_pro_3',
+    detailUrl: 'https://www.apple.com.cn/airpods-pro/',
+    specsUrl: 'https://www.apple.com.cn/airpods-pro/specs/',
+    parameters: []
   }
 ];
+
+let products = [...fallbackProducts];
 
 const state = {
   detailOpen: false,
@@ -75,15 +66,12 @@ const state = {
   viewed: [],
   canvasItems: [],
   activeChip: '',
-  pending: false
+  pending: false,
+  sheetMode: 'footprint'
 };
 
 const dom = {
-  storeSub: document.getElementById('storeSub'),
-  welcomeText: document.getElementById('welcomeText'),
-  feedMeta: document.getElementById('feedMeta'),
-  feedGrid: document.getElementById('feedGrid'),
-  canvasStack: document.getElementById('canvasStack'),
+  conversationStream: document.getElementById('conversationStream'),
   intentStrip: document.getElementById('intentStrip'),
   intentInput: document.getElementById('intentInput'),
   sendBtn: document.getElementById('sendBtn'),
@@ -91,21 +79,35 @@ const dom = {
   detailCloseBtn: document.getElementById('detailCloseBtn'),
   detailAiBtn: document.getElementById('detailAiBtn'),
   historySheet: document.getElementById('historySheet'),
+  historyTitle: document.getElementById('historyTitle'),
   historyList: document.getElementById('historyList'),
   historyCloseBtn: document.getElementById('historyCloseBtn'),
   detailImage: document.getElementById('detailImage'),
   detailImageLabel: document.getElementById('detailImageLabel'),
-  detailPrice: document.getElementById('detailPrice'),
-  detailTag: document.getElementById('detailTag'),
   detailName: document.getElementById('detailName'),
-  detailDesc: document.getElementById('detailDesc'),
   detailInsight: document.getElementById('detailInsight'),
+  sizeRow: document.getElementById('sizeRow'),
+  sizeNote: document.getElementById('sizeNote'),
   bundleList: document.getElementById('bundleList'),
   buyPrice: document.getElementById('buyPrice')
 };
 
 function money(price) {
-  return `¥${price.toLocaleString('zh-CN')}`;
+  if (typeof price === 'number' && Number.isFinite(price)) {
+    return `¥${price.toLocaleString('zh-CN')}`;
+  }
+
+  if (typeof price === 'string') {
+    const cleaned = price
+      .replace(/\{[^}]+\}/g, '')
+      .replace(/\$price\.display\.monthlyFrom\*/g, '官网价')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    return cleaned || '官网可选配置';
+  }
+
+  return '官网可选配置';
 }
 
 function timeLabel() {
@@ -115,85 +117,272 @@ function timeLabel() {
   return `${hh}:${mm}`;
 }
 
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function safeCssUrl(url) {
+  return encodeURI(String(url || ''))
+    .replace(/'/g, '%27')
+    .replace(/\(/g, '%28')
+    .replace(/\)/g, '%29');
+}
+
+function categoryLabel(category) {
+  const map = {
+    iphone: 'iPhone',
+    ipad: 'iPad',
+    mac: 'Mac',
+    watch: 'Watch',
+    airpods: 'AirPods',
+    homepod: 'HomePod',
+    vision: 'Vision'
+  };
+  return map[category] || 'Apple';
+}
+
+function normalizeProduct(raw, index) {
+  const id = typeof raw.id === 'string' && raw.id.trim() ? raw.id.trim() : `apple-${index + 1}`;
+  const category = typeof raw.category === 'string' && raw.category.trim() ? raw.category.trim() : 'apple';
+  const name = typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : `Apple 设备 ${index + 1}`;
+  const desc = typeof raw.desc === 'string' && raw.desc.trim() ? raw.desc.trim() : 'Apple 中国官网在售设备。';
+  const image = typeof raw.image === 'string' ? raw.image.trim() : '';
+  const tag = typeof raw.tag === 'string' && raw.tag.trim() ? raw.tag.trim() : categoryLabel(category);
+  const price = raw.price ?? '官网可选配置';
+  const buyUrl = typeof raw.buyUrl === 'string' ? raw.buyUrl.trim() : '';
+  const detailUrl = typeof raw.detailUrl === 'string' ? raw.detailUrl.trim() : '';
+  const specsUrl = typeof raw.specsUrl === 'string' ? raw.specsUrl.trim() : '';
+  const parameters = Array.isArray(raw.parameters)
+    ? raw.parameters
+        .map((item) => {
+          if (!item || typeof item !== 'object') {
+            return null;
+          }
+          const key = typeof item.name === 'string' ? item.name.trim() : '';
+          const value = typeof item.value === 'string' ? item.value.trim() : '';
+          if (!key || !value) {
+            return null;
+          }
+          return { name: key, value };
+        })
+        .filter(Boolean)
+    : [];
+
+  return {
+    id,
+    category,
+    name,
+    desc,
+    image,
+    tag,
+    price,
+    buyUrl,
+    detailUrl,
+    specsUrl,
+    parameters,
+    color: '#ece8df'
+  };
+}
+
+async function loadAppleCatalog() {
+  try {
+    const response = await fetch('./data/apple_products.json', { cache: 'no-cache' });
+    if (!response.ok) {
+      return;
+    }
+
+    const data = await response.json();
+    if (!data || !Array.isArray(data.products) || !data.products.length) {
+      return;
+    }
+
+    products = data.products.map((item, index) => normalizeProduct(item, index));
+  } catch (_error) {
+    // keep fallback products
+  }
+}
+
 function findProductById(id) {
   return products.find((item) => item.id === id);
 }
 
-function renderFeed() {
-  dom.feedGrid.innerHTML = products
-    .map(
-      (item) => `
-      <article class="product-card">
-        <div class="product-thumb" style="background:${item.color}">
-          <span class="tag-badge">${item.tag}</span>
-          <span>${item.name}</span>
-        </div>
-        <div class="product-info">
-          <p class="product-name">${item.name}</p>
-          <div class="product-meta">
-            <span class="price">${money(item.price)}</span>
-            <button type="button" data-open="${item.id}">看详情</button>
-          </div>
-        </div>
-      </article>
-    `
-    )
-    .join('');
-}
-
 function renderIntentStrip(list) {
   dom.intentStrip.innerHTML = list
-    .map(
-      (item) =>
-        `<button class="intent-chip ${state.activeChip === item ? 'active' : ''}" type="button" data-intent="${item}">${item}</button>`
-    )
-    .join('');
-}
-
-function renderCanvas() {
-  if (!state.canvasItems.length) {
-    dom.canvasStack.innerHTML = '';
-    return;
-  }
-
-  dom.canvasStack.innerHTML = state.canvasItems
     .map((item) => {
-      const picksHtml = item.picks.length
-        ? `<div class="canvas-picks">
-            ${item.picks
-              .map(
-                (pick) => `
-              <div class="canvas-pick">
-                <div class="canvas-pick-thumb" style="background:${pick.color}"></div>
-                <div class="canvas-pick-info">
-                  <div class="canvas-pick-name">${pick.name}</div>
-                  <div class="canvas-pick-price">${money(pick.price)}</div>
-                </div>
-                <button type="button" data-open="${pick.id}">详情</button>
-              </div>
-            `
-              )
-              .join('')}
-          </div>`
-        : '';
-
-      return `
-        <article class="canvas-card">
-          <div class="user-bubble">${item.question}</div>
-          <div class="assistant-bubble">${item.answer}</div>
-          ${picksHtml}
-        </article>
-      `;
+      const fixedClass = item === '商品足迹' ? 'foot' : item === '历史消息' ? 'msg' : '';
+      const activeClass = state.activeChip === item ? 'active' : '';
+      return `<button class="chip ${fixedClass} ${activeClass}" type="button" data-intent="${escapeHtml(item)}">${escapeHtml(item)}</button>`;
     })
     .join('');
 }
 
+function pickPoint(product) {
+  return `→ ${categoryLabel(product.category)} 在售设备`;
+}
+
+function productThumbStyle(product) {
+  if (product.image) {
+    return `background-color:#ece8df;background-image:url('${safeCssUrl(product.image)}');background-size:cover;background-position:center;`;
+  }
+  return `background:${product.color || '#ece8df'}`;
+}
+
+function productCardHtml(product) {
+  return `
+    <article class="assistant-pick" data-open="${product.id}">
+      <div class="assistant-pick-thumb" style="${productThumbStyle(product)}"></div>
+      <div class="assistant-pick-point">${escapeHtml(pickPoint(product))}</div>
+      <div class="assistant-pick-name">${escapeHtml(product.name)}</div>
+      <div class="assistant-pick-price">${escapeHtml(money(product.price))}</div>
+    </article>
+  `;
+}
+
+function conversationItemHtml(item, index) {
+  const userRow = item.question
+    ? `
+      <div class="msg-row user">
+        <div class="user-bubble">${escapeHtml(item.question)}</div>
+        <div class="user-avatar" aria-hidden="true">王</div>
+      </div>
+    `
+    : '';
+
+  const picksHtml = item.picks.length
+    ? `
+      <div class="assistant-feed-row">
+        <div class="assistant-feed">
+          ${item.picks.map((pick) => productCardHtml(pick)).join('')}
+        </div>
+      </div>
+    `
+    : '';
+
+  return `
+    <article class="msg-group" data-conv-index="${index}">
+      ${userRow}
+      <div class="msg-row assistant">
+        <div class="assistant-bubble">
+          <p class="assistant-text">${escapeHtml(item.answer)}</p>
+        </div>
+      </div>
+      ${picksHtml}
+    </article>
+  `;
+}
+
+function scrollCanvasToConversationTop(index) {
+  const target = dom.conversationStream.querySelector(`.msg-group[data-conv-index="${index}"]`);
+  if (!target) {
+    return;
+  }
+
+  const nextTop = Math.max(0, target.offsetTop - 6);
+  dom.conversationStream.scrollTop = nextTop;
+}
+
+function renderCanvas(options = {}) {
+  const { anchorConversationIndex = null } = options;
+
+  if (!state.canvasItems.length) {
+    dom.conversationStream.innerHTML = `
+      <article class="canvas-empty">
+        anna 已在线，你可以直接说「帮我选 iPhone」「我想买轻薄笔记本」「AirPods 哪个适合通勤」。
+      </article>
+    `;
+    return;
+  }
+
+  dom.conversationStream.innerHTML = state.canvasItems
+    .map((item, index) => conversationItemHtml(item, index))
+    .join('');
+
+  if (Number.isInteger(anchorConversationIndex)) {
+    window.requestAnimationFrame(() => {
+      scrollCanvasToConversationTop(anchorConversationIndex);
+      window.setTimeout(() => {
+        scrollCanvasToConversationTop(anchorConversationIndex);
+      }, 80);
+    });
+    return;
+  }
+
+  window.requestAnimationFrame(() => {
+    dom.conversationStream.scrollTop = dom.conversationStream.scrollHeight;
+  });
+}
+
 function currentIntentList() {
   const base = state.detailOpen ? detailIntents : homeIntents;
-  if (!state.detailOpen && state.viewed.length > 0) {
-    return ['店内足迹', ...base];
+  return [...fixedIntents, ...base];
+}
+
+function containsAny(text, keywords) {
+  return keywords.some((item) => text.includes(item));
+}
+
+function scoreProductByQuery(product, query) {
+  const q = query.toLowerCase();
+  let score = 0;
+
+  if (product.name.toLowerCase().includes(q)) {
+    score += 5;
   }
-  return base;
+
+  if (containsAny(q, [product.category.toLowerCase(), categoryLabel(product.category).toLowerCase()])) {
+    score += 3;
+  }
+
+  if (product.desc.toLowerCase().includes(q)) {
+    score += 2;
+  }
+
+  for (const param of product.parameters.slice(0, 8)) {
+    if (param.value.toLowerCase().includes(q) || param.name.toLowerCase().includes(q)) {
+      score += 1;
+    }
+  }
+
+  return score;
+}
+
+function topProductsByQuery(query, limit = 4) {
+  const q = query.trim().toLowerCase();
+  if (!q) {
+    return products.slice(0, limit);
+  }
+
+  const scored = products
+    .map((product) => ({ product, score: scoreProductByQuery(product, q) }))
+    .sort((a, b) => b.score - a.score);
+
+  const positive = scored.filter((item) => item.score > 0).map((item) => item.product);
+  if (positive.length) {
+    return positive.slice(0, limit);
+  }
+
+  return products.slice(0, limit);
+}
+
+function sameCategoryPicks(product, limit = 4) {
+  return products.filter((item) => item.category === product.category && item.id !== product.id).slice(0, limit);
+}
+
+function categoryPicks(category, limit = 4) {
+  return products.filter((item) => item.category === category).slice(0, limit);
+}
+
+function paramSummary(product, take = 3) {
+  const params = product.parameters.slice(0, take);
+  if (!params.length) {
+    return '这款设备的完整参数可在详情页与技术规格页查看。';
+  }
+  return params.map((item) => `${item.name}：${item.value}`).join('；');
 }
 
 function buildAnswer(query) {
@@ -202,66 +391,94 @@ function buildAnswer(query) {
   const selected = findProductById(state.selectedProductId);
 
   if (state.detailOpen && selected) {
-    if (q.includes('尺码')) {
+    if (containsAny(q, ['参数', '规格', '配置', '芯片', '续航', '屏幕'])) {
       return {
-        answer: `基于你的历史购买和这件 ${selected.name} 的版型，我建议优先试 S 码；如果喜欢更宽松可试 M 码。`,
-        picks: []
-      };
-    }
-
-    if (q.includes('试衣') || lc.includes('ai')) {
-      return {
-        answer: `已为你生成这件 ${selected.name} 的 AI 试衣建议：推荐搭配浅色内搭与直筒裤，整体更利落。`,
+        answer: `${selected.name} 的核心参数：${paramSummary(selected)}。`,
         picks: [selected]
       };
     }
 
-    if (q.includes('优惠') || q.includes('便宜') || q.includes('折')) {
+    if (containsAny(q, ['对比', '区别', '怎么选', '差异'])) {
+      const picks = [selected, ...sameCategoryPicks(selected, 2)];
       return {
-        answer: `这件商品当前可叠加会员券，预计到手 ${money(Math.round(selected.price * 0.88))}，再加购同系列下装还有套装减免。`,
+        answer: `我给你放了同类别设备做对比，重点看芯片、屏幕和续航这三项会更快做决策。`,
+        picks
+      };
+    }
+
+    if (containsAny(q, ['适合', '人群', '场景', '通勤', '学习', '办公', '剪辑'])) {
+      return {
+        answer: `${selected.name} 更适合 ${selected.desc}。你也可以继续告诉我预算和使用场景，我会进一步收敛。`,
+        picks: [selected]
+      };
+    }
+
+    if (containsAny(q, ['价格', '优惠', '多少钱', '预算', '购买'])) {
+      const buyHint = selected.buyUrl ? '可直接点开购买入口查看当前配置价格。' : '可进入官网查看实时价格。';
+      return {
+        answer: `${selected.name} 当前展示为「${money(selected.price)}」。${buyHint}`,
         picks: [selected]
       };
     }
 
     return {
-      answer: `关于 ${selected.name}，你可以继续问我尺码、试衣效果、搭配方案或优惠规则，我会直接在当前页承接。`,
+      answer: `关于 ${selected.name}，你可以继续问参数解读、同类对比、适合人群和购买建议。`,
       picks: [selected]
     };
   }
 
-  if (q.includes('新品') || q.includes('上新')) {
+  if (containsAny(q, ['新品', '上新', '最新'])) {
     return {
-      answer: '根据你的进店意图，我先把新品中匹配度最高的 3 款放在这里，你可以直接打开详情继续追问。',
-      picks: products.slice(0, 3)
+      answer: '我先给你放一组 Apple 中国官网当前在售的热门新款设备，方便你快速浏览。',
+      picks: products.slice(0, 4)
     };
   }
 
-  if (q.includes('优惠') || q.includes('便宜') || q.includes('券')) {
-    const picks = products.filter((item) => item.price <= 1380).slice(0, 3);
+  if (containsAny(lc, ['iphone', '手机'])) {
     return {
-      answer: '你当前可用 2 张店铺券，我先给你筛了更划算的款式，并按到手价优先排序。',
-      picks
+      answer: '下面是当前在售 iPhone 机型，我优先按主流选择放在前面。',
+      picks: categoryPicks('iphone', 4)
     };
   }
 
-  if (q.includes('风衣') || q.includes('外套')) {
-    const picks = products.filter((item) => item.name.includes('风衣') || item.name.includes('外套')).slice(0, 3);
+  if (containsAny(lc, ['ipad', '平板'])) {
     return {
-      answer: '已根据你的描述筛到同风格外套，版型都偏利落，适合通勤场景。',
-      picks
+      answer: '下面是当前在售 iPad 机型，你可以继续告诉我侧重学习、创作还是娱乐。',
+      picks: categoryPicks('ipad', 4)
     };
   }
 
+  if (containsAny(lc, ['mac', 'macbook', '电脑', '笔记本'])) {
+    return {
+      answer: '我先放适合大多数用户的 Mac 设备组合，你可以继续补充预算和性能需求。',
+      picks: categoryPicks('mac', 4)
+    };
+  }
+
+  if (containsAny(lc, ['watch', '手表'])) {
+    return {
+      answer: '下面是当前在售 Apple Watch 机型，可继续按运动、健康或续航偏好细分。',
+      picks: categoryPicks('watch', 4)
+    };
+  }
+
+  if (containsAny(lc, ['airpods', '耳机', '降噪'])) {
+    return {
+      answer: '我先给你放在售 AirPods 机型，重点可以对比降噪、佩戴和续航。',
+      picks: categoryPicks('airpods', 4)
+    };
+  }
+
+  const matched = topProductsByQuery(q, 4);
   return {
-    answer: '收到你的意图。我先给你一个高匹配结果集合，你也可以进一步限定预算、颜色或场景。',
-    picks: products.slice(1, 4)
+    answer: '已根据你的问题匹配到官网在售设备。你可以继续补充预算、使用场景和偏好，我会进一步收敛。',
+    picks: matched
   };
 }
 
 function setPending(pending) {
   state.pending = pending;
   dom.sendBtn.disabled = pending;
-  dom.sendBtn.textContent = pending ? '思考中...' : '发送';
   dom.intentInput.disabled = pending;
 }
 
@@ -283,7 +500,7 @@ function normalizeServerPicks(rawPicks) {
       return null;
     })
     .filter(Boolean)
-    .slice(0, 3);
+    .slice(0, 4);
 }
 
 async function fetchServerAnswer(query) {
@@ -337,19 +554,18 @@ async function sendIntent(manualText) {
     setPending(false);
   }
 
-  state.canvasItems.unshift({
+  state.canvasItems.push({
     question: text,
     answer: result.answer,
     picks: result.picks,
     createdAt: timeLabel()
   });
+  const latestUserIndex = state.canvasItems.length - 1;
 
   dom.intentInput.value = '';
-  state.activeChip = text;
-  dom.storeSub.textContent = `已承接意图：${text}`;
-  dom.feedMeta.textContent = `最后更新 ${timeLabel()}`;
+  state.activeChip = '';
 
-  renderCanvas();
+  renderCanvas({ anchorConversationIndex: latestUserIndex });
   renderIntentStrip(currentIntentList());
   closeHistorySheet();
 }
@@ -366,6 +582,53 @@ function upsertViewed(productId) {
   }
 
   state.viewed.unshift(viewedItem);
+}
+
+function fillDetailParams(product) {
+  const params = product.parameters.slice(0, 4);
+  dom.sizeRow.innerHTML = params
+    .map((item, index) => `<span class="sz ${index === 1 ? 'rec' : ''}">${escapeHtml(item.name.slice(0, 6) || '参数')}</span>`)
+    .join('');
+
+  if (params.length < 4) {
+    const fillers = ['芯片', '显示', '影像', '续航'].slice(params.length);
+    dom.sizeRow.innerHTML += fillers.map((item) => `<span class="sz">${escapeHtml(item)}</span>`).join('');
+  }
+
+  const summary = params.map((item) => `${item.name}：${item.value}`).join('；');
+  dom.sizeNote.textContent = summary || '以下信息来自 Apple 中国官网公开技术规格。';
+}
+
+function renderDetail(product) {
+  dom.detailImage.style.backgroundColor = '#ece8df';
+  if (product.image) {
+    dom.detailImage.style.backgroundImage = `url('${safeCssUrl(product.image)}')`;
+    dom.detailImage.style.backgroundSize = 'cover';
+    dom.detailImage.style.backgroundPosition = 'center';
+  } else {
+    dom.detailImage.style.backgroundImage = 'none';
+  }
+
+  dom.detailImageLabel.textContent = product.name;
+  dom.detailName.textContent = product.name;
+  dom.detailInsight.textContent = `${product.name} 的建议：${product.desc}`;
+  dom.buyPrice.textContent = money(product.price);
+
+  fillDetailParams(product);
+
+  dom.bundleList.innerHTML = products
+    .filter((item) => item.id !== product.id)
+    .slice(0, 3)
+    .map(
+      (item) => `
+      <article class="bundle-item">
+        <div class="bundle-item-thumb" style="${productThumbStyle(item)}"></div>
+        <div class="bundle-item-name">${escapeHtml(item.name)}</div>
+        <div class="bundle-item-price">${escapeHtml(money(item.price))}</div>
+      </article>
+    `
+    )
+    .join('');
 }
 
 function openDetail(productId) {
@@ -385,9 +648,7 @@ function openDetail(productId) {
 
   dom.detailOverlay.classList.add('open');
   dom.detailOverlay.setAttribute('aria-hidden', 'false');
-  dom.storeSub.textContent = `正在承接：${product.name}`;
-  dom.feedMeta.textContent = '详情浮层已打开';
-  dom.intentInput.placeholder = '继续问这件商品：尺码、试衣、优惠、搭配';
+  dom.intentInput.placeholder = '继续问这台设备：参数、对比、适合人群、购买建议';
 }
 
 function closeDetail() {
@@ -396,42 +657,56 @@ function closeDetail() {
 
   dom.detailOverlay.classList.remove('open');
   dom.detailOverlay.setAttribute('aria-hidden', 'true');
-  dom.storeSub.textContent = '已返回 Feeds，可继续提问或查看店内足迹';
-  dom.feedMeta.textContent = `最后更新 ${timeLabel()}`;
-  dom.intentInput.placeholder = '在店内随时提问：找商品、问优惠、要搭配...';
+  dom.intentInput.placeholder = 'anna 在线，可以问我任何问题';
 
   renderIntentStrip(currentIntentList());
 }
 
-function renderDetail(product) {
-  dom.detailImage.style.background = product.color;
-  dom.detailImageLabel.textContent = product.name;
-  dom.detailPrice.textContent = money(product.price);
-  dom.detailTag.textContent = product.tag;
-  dom.detailName.textContent = product.name;
-  dom.detailDesc.textContent = product.desc;
-  dom.detailInsight.textContent = `你最近浏览了同风格单品，${product.name} 在版型与颜色上和你的偏好匹配度较高，建议优先试 S 码。`;
-  dom.buyPrice.textContent = money(product.price);
-
-  const bundles = products
-    .filter((item) => item.id !== product.id)
-    .slice(0, 2)
-    .map(
-      (item) => `
-      <div class="bundle-item">
-        <span>${item.name}</span>
-        <strong>${money(item.price)}</strong>
-      </div>
-    `
-    )
-    .join('');
-
-  dom.bundleList.innerHTML = bundles;
+function localCondense(text) {
+  const cleaned = String(text || '').replace(/\s+/g, ' ').trim();
+  if (!cleaned) {
+    return 'anna 已更新推荐内容';
+  }
+  if (cleaned.length <= 28) {
+    return cleaned;
+  }
+  return `${cleaned.slice(0, 28)}…`;
 }
 
 function renderHistorySheet() {
+  if (state.sheetMode === 'history') {
+    dom.historyTitle.textContent = '历史消息';
+
+    const historyRows = state.canvasItems
+      .map((item, index) => ({ item, index }))
+      .filter(({ item }) => item.question && item.question.trim())
+      .reverse();
+
+    if (!historyRows.length) {
+      dom.historyList.innerHTML = '<div class="empty-sheet">还没有历史消息，先提一个问题吧。</div>';
+      return;
+    }
+
+    dom.historyList.innerHTML = historyRows
+      .map(
+        ({ item, index }) => `
+        <article class="sheet-item">
+          <div class="sheet-thumb" style="background:${index % 2 === 0 ? '#ede8de' : '#f5f0e8'}"></div>
+          <div>
+            <div class="sheet-name">${escapeHtml(item.question)}</div>
+            <div class="sheet-meta">${escapeHtml(localCondense(item.answer))} · ${escapeHtml(item.createdAt || '刚刚')}</div>
+          </div>
+          <button type="button" data-history="${index}">定位</button>
+        </article>
+      `
+      )
+      .join('');
+    return;
+  }
+
+  dom.historyTitle.textContent = '商品足迹';
   if (!state.viewed.length) {
-    dom.historyList.innerHTML = '<div class="empty-sheet">还没有浏览足迹，先去点开一件商品看看吧。</div>';
+    dom.historyList.innerHTML = '<div class="empty-sheet">还没有商品足迹，先点开一台设备看看吧。</div>';
     return;
   }
 
@@ -444,10 +719,10 @@ function renderHistorySheet() {
 
       return `
         <article class="sheet-item">
-          <div class="sheet-thumb" style="background:${product.color}"></div>
+          <div class="sheet-thumb" style="${productThumbStyle(product)}"></div>
           <div>
-            <div class="sheet-name">${product.name}</div>
-            <div class="sheet-meta">${money(product.price)} · ${viewed.time} 浏览</div>
+            <div class="sheet-name">${escapeHtml(product.name)}</div>
+            <div class="sheet-meta">${escapeHtml(money(product.price))} · ${viewed.time} 浏览</div>
           </div>
           <button type="button" data-open="${product.id}">重看</button>
         </article>
@@ -456,10 +731,11 @@ function renderHistorySheet() {
     .join('');
 }
 
-function openHistorySheet() {
+function openHistorySheet(mode = 'footprint') {
+  state.sheetMode = mode === 'history' ? 'history' : 'footprint';
   renderHistorySheet();
   state.historyOpen = true;
-  state.activeChip = '店内足迹';
+  state.activeChip = state.sheetMode === 'history' ? '历史消息' : '商品足迹';
   renderIntentStrip(currentIntentList());
   dom.historySheet.classList.add('open');
   dom.historySheet.setAttribute('aria-hidden', 'false');
@@ -467,7 +743,7 @@ function openHistorySheet() {
 
 function closeHistorySheet() {
   state.historyOpen = false;
-  if (state.activeChip === '店内足迹') {
+  if (state.activeChip === '商品足迹' || state.activeChip === '历史消息') {
     state.activeChip = '';
     renderIntentStrip(currentIntentList());
   }
@@ -475,17 +751,38 @@ function closeHistorySheet() {
   dom.historySheet.setAttribute('aria-hidden', 'true');
 }
 
-function bindEvents() {
-  dom.feedGrid.addEventListener('click', (event) => {
-    const button = event.target.closest('[data-open]');
-    if (!button) {
-      return;
+function scrollConversationTo(index) {
+  const target = dom.conversationStream.querySelector(`[data-conv-index="${index}"]`);
+  if (!target) {
+    return;
+  }
+
+  target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function seedCanvasWelcome() {
+  if (state.canvasItems.length) {
+    return;
+  }
+
+  state.canvasItems.push(
+    {
+      question: '',
+      answer: 'hi 王同学，欢迎进店。我是你的 Apple 设备导购 anna。我会基于 Apple 中国官网在售知识库给你推荐。',
+      picks: products.slice(0, 4),
+      createdAt: timeLabel()
+    },
+    {
+      question: '',
+      answer: '你可以直接问我：选 iPhone、对比 Mac、找降噪耳机、看参数差异。',
+      picks: [],
+      createdAt: timeLabel()
     }
+  );
+}
 
-    openDetail(button.dataset.open);
-  });
-
-  dom.canvasStack.addEventListener('click', (event) => {
+function bindEvents() {
+  dom.conversationStream.addEventListener('click', (event) => {
     const button = event.target.closest('[data-open]');
     if (!button) {
       return;
@@ -501,11 +798,12 @@ function bindEvents() {
     }
 
     const intent = target.dataset.intent;
-    if (intent === '店内足迹') {
-      if (state.historyOpen) {
+    if (intent === '商品足迹' || intent === '历史消息') {
+      const mode = intent === '历史消息' ? 'history' : 'footprint';
+      if (state.historyOpen && state.sheetMode === mode) {
         closeHistorySheet();
       } else {
-        openHistorySheet();
+        openHistorySheet(mode);
       }
       return;
     }
@@ -529,7 +827,7 @@ function bindEvents() {
   });
 
   dom.detailAiBtn.addEventListener('click', () => {
-    void sendIntent('AI试衣建议');
+    void sendIntent('参数解读');
   });
 
   dom.historyCloseBtn.addEventListener('click', () => {
@@ -537,6 +835,16 @@ function bindEvents() {
   });
 
   dom.historyList.addEventListener('click', (event) => {
+    const historyButton = event.target.closest('[data-history]');
+    if (historyButton) {
+      const index = Number(historyButton.dataset.history);
+      closeHistorySheet();
+      if (Number.isInteger(index)) {
+        scrollConversationTo(index);
+      }
+      return;
+    }
+
     const button = event.target.closest('[data-open]');
     if (!button) {
       return;
@@ -547,10 +855,12 @@ function bindEvents() {
   });
 }
 
-function init() {
-  renderFeed();
+async function init() {
+  await loadAppleCatalog();
+  seedCanvasWelcome();
+  renderCanvas();
   renderIntentStrip(currentIntentList());
   bindEvents();
 }
 
-init();
+void init();
