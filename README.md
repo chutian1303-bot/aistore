@@ -1,4 +1,4 @@
-# JNBY AI 店铺 · 演示 Demo
+#  AI 店铺 · 演示 Demo by chutian
 
 ## 部署到 GitHub Pages（5分钟）
 
@@ -7,7 +7,7 @@
 1. **新建仓库**
    - 登录 GitHub（chutian1303-bot）
    - 点击右上角 `+` → `New repository`
-   - 仓库名填：`jnby-ai-demo`
+   - 仓库名填：`ai-demo`
    - 选 `Public`，点击 `Create repository`
 
 2. **上传文件**
@@ -25,10 +25,6 @@
 
 4. **等待 1-2 分钟后访问**
    - 地址：`https://chutian1303-bot.github.io/jnby-ai-demo/`
-
-5. **生成二维码**
-   - 把上面的地址粘贴到 [草料二维码](https://cli.im/) 生成二维码
-   - 打印或展示给客户扫码体验
 
 ---
 
