@@ -1,0 +1,35 @@
+{
+  "startedAt": "2026-04-11T18:43:00.374Z",
+  "baseUrl": "https://jnby-ai-store-demo.vercel.app",
+  "mode": "local",
+  "totalSessions": 5939,
+  "totalTurns": 26728,
+  "okTurns": 26728,
+  "failTurns": 0,
+  "lowScoreTurns": 0,
+  "avgLatencyMs": 2713,
+  "avgScore": 96.67,
+  "updatedAt": "2026-04-13T14:03:26.199Z",
+  "latestTurn": {
+    "at": "2026-04-13T14:03:26.198Z",
+    "session": 5940,
+    "turn": 3,
+    "query": "如果预算再降 20%，你会换成哪款，为什么？",
+    "detailOpen": false,
+    "currentProductId": null,
+    "status": 200,
+    "ok": true,
+    "score": 94,
+    "reasons": [
+      "回复与问题关键词弱相关"
+    ],
+    "picks": [
+      "acc-mxmc3",
+      "acc-hrwu2",
+      "acc-meq94",
+      "acc-mhxu4"
+    ],
+    "answer": "我先给你推荐 金色链式表带 等 4 款 Apple 在售商品，到手价 ¥2,159。继续告诉我预算和使用场景，我会再收敛。",
+    "latencyMs": 109
+  }
+}
