@@ -1,0 +1,23 @@
+{
+  "generated_at": "2026-04-11T15:58:11Z",
+  "total_products": 196,
+  "device_count": 35,
+  "accessory_count": 161,
+  "category_counts": {
+    "airpods": 4,
+    "airpods_accessory": 12,
+    "cross_device_accessory": 15,
+    "general_accessory": 33,
+    "homepod": 2,
+    "ipad": 4,
+    "ipad_accessory": 13,
+    "iphone": 7,
+    "iphone_accessory": 31,
+    "mac": 14,
+    "mac_accessory": 23,
+    "vision": 1,
+    "vision_accessory": 13,
+    "watch": 3,
+    "watch_accessory": 21
+  }
+}

@@ -1,6 +1,15 @@
 const DEFAULT_BASE_URL = 'https://api.minimaxi.com/v1';
 const DEFAULT_MODEL = 'MiniMax-M2.5';
 
+function cleanEnvValue(raw, fallback = '') {
+  const value = typeof raw === 'string' ? raw : '';
+  const cleaned = value.replace(/\\n/g, '').trim();
+  if (cleaned) {
+    return cleaned;
+  }
+  return fallback;
+}
+
 function readContentText(content) {
   if (typeof content === 'string') {
     return content;
@@ -42,7 +51,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  const apiKey = process.env.MINIMAX_API_KEY;
+  const apiKey = cleanEnvValue(process.env.MINIMAX_API_KEY);
   if (!apiKey) {
     res.status(500).json({ error: 'Missing MINIMAX_API_KEY environment variable' });
     return;
@@ -57,11 +66,11 @@ export default async function handler(req, res) {
     return;
   }
 
-  const baseUrl = (process.env.MINIMAX_BASE_URL || DEFAULT_BASE_URL).replace(/\/$/, '');
-  const model = process.env.MINIMAX_MODEL || DEFAULT_MODEL;
+  const baseUrl = cleanEnvValue(process.env.MINIMAX_BASE_URL, DEFAULT_BASE_URL).replace(/\/$/, '');
+  const model = cleanEnvValue(process.env.MINIMAX_MODEL, DEFAULT_MODEL);
 
   const systemPrompt = [
-    '你是服饰导购的简述助手。',
+    '你是 Apple 设备导购的简述助手。',
     '将导购回复压缩成一句中文简述，用于滚动时顶部提示。',
     '要求：',
     '1) 只输出简述本身，不要解释，不要 markdown。',

@@ -1,6 +1,7 @@
 const homeIntents = ['进店看新品', '帮我选 iPhone', '帮我找 Mac', '我要降噪耳机'];
 const detailIntents = ['参数解读', '同类对比', '适合人群', '购买建议'];
 const fixedIntents = ['商品足迹', '历史消息'];
+const RECOMMENDATION_COUNT = 20;
 
 const fallbackProducts = [
   {
@@ -61,6 +62,7 @@ let products = [...fallbackProducts];
 
 const state = {
   detailOpen: false,
+  detailChatMode: false,
   historyOpen: false,
   selectedProductId: null,
   viewed: [],
@@ -86,10 +88,17 @@ const dom = {
   detailImageLabel: document.getElementById('detailImageLabel'),
   detailName: document.getElementById('detailName'),
   detailInsight: document.getElementById('detailInsight'),
+  detailChatView: document.getElementById('detailChatView'),
+  detailChatStream: document.getElementById('detailChatStream'),
+  detailChatThumb: document.getElementById('detailChatThumb'),
+  detailChatName: document.getElementById('detailChatName'),
+  detailChatPrice: document.getElementById('detailChatPrice'),
   sizeRow: document.getElementById('sizeRow'),
   sizeNote: document.getElementById('sizeNote'),
   bundleList: document.getElementById('bundleList'),
-  buyPrice: document.getElementById('buyPrice')
+  buyPrice: document.getElementById('buyPrice'),
+  buyPriceOfficial: document.getElementById('buyPriceOfficial'),
+  buyPriceBadge: document.getElementById('buyPriceBadge')
 };
 
 function money(price) {
@@ -108,6 +117,113 @@ function money(price) {
   }
 
   return '官网可选配置';
+}
+
+function parseNumber(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return null;
+}
+
+function parsePriceFromText(value) {
+  if (typeof value !== 'string') {
+    return null;
+  }
+
+  const compact = value.replace(/\s+/g, '');
+  const match = compact.match(/(\d[\d,]*)(\.\d{1,2})?/);
+  if (!match) {
+    return null;
+  }
+
+  const normalized = `${match[1].replace(/,/g, '')}${match[2] || ''}`;
+  const parsed = Number(normalized);
+  if (Number.isFinite(parsed) && parsed > 0) {
+    return Math.round(parsed);
+  }
+  return null;
+}
+
+function resolveOfficialPrice(product) {
+  const officialDirect = parseNumber(product.officialPrice);
+  if (officialDirect && officialDirect > 0) {
+    return Math.round(officialDirect);
+  }
+
+  const finalDirect = parseNumber(product.finalPrice);
+  const discountDirect = parseNumber(product.discountAmount);
+  if (finalDirect && finalDirect > 0 && discountDirect && discountDirect > 0) {
+    return Math.round(finalDirect + discountDirect);
+  }
+
+  const textPrice = parsePriceFromText(typeof product.price === 'string' ? product.price : '');
+  if (textPrice && textPrice > 0) {
+    return textPrice;
+  }
+
+  return null;
+}
+
+function priceBreakdown(product) {
+  const officialDirect = parseNumber(product.officialPrice);
+  const finalDirect = parseNumber(product.finalPrice);
+  const discountDirect = parseNumber(product.discountAmount);
+
+  if (officialDirect && officialDirect > 0 && finalDirect && finalDirect > 0) {
+    const official = Math.round(officialDirect);
+    const final = Math.round(finalDirect);
+    const discount = Math.max(0, official - final);
+    return { official, discount, final };
+  }
+
+  if (finalDirect && finalDirect > 0 && discountDirect && discountDirect > 0) {
+    const final = Math.round(finalDirect);
+    const discount = Math.round(discountDirect);
+    const official = Math.round(final + discount);
+    return { official, discount, final };
+  }
+
+  const official = resolveOfficialPrice(product);
+  if (official && official > 0) {
+    const discount = Math.round(official * 0.2);
+    const final = official - discount;
+    return { official, discount, final };
+  }
+
+  const finalFromText = parsePriceFromText(typeof product.price === 'string' ? product.price : '');
+  if (finalFromText && finalFromText > 0) {
+    const final = Math.round(finalFromText);
+    const officialFromFinal = Math.round(final / 0.8);
+    const discount = Math.max(0, officialFromFinal - final);
+    return { official: officialFromFinal, discount, final };
+  }
+
+  return null;
+}
+
+function primaryPriceText(product) {
+  const breakdown = priceBreakdown(product);
+  if (breakdown) {
+    return `到手价 ${money(breakdown.final)}`;
+  }
+
+  const official = resolveOfficialPrice(product);
+  if (official && official > 0) {
+    return `官网价 ${money(official)}`;
+  }
+
+  const text = money(product.price);
+  if (text && text !== '官网可选配置') {
+    return text;
+  }
+  return '价格待更新';
 }
 
 function timeLabel() {
@@ -141,7 +257,15 @@ function categoryLabel(category) {
     watch: 'Watch',
     airpods: 'AirPods',
     homepod: 'HomePod',
-    vision: 'Vision'
+    vision: 'Vision',
+    iphone_accessory: 'iPhone 配件',
+    ipad_accessory: 'iPad 配件',
+    mac_accessory: 'Mac 配件',
+    watch_accessory: 'Watch 配件',
+    vision_accessory: 'Vision 配件',
+    airpods_accessory: 'AirPods 配件',
+    cross_device_accessory: '通用配件',
+    general_accessory: 'Apple 配件'
   };
   return map[category] || 'Apple';
 }
@@ -157,6 +281,9 @@ function normalizeProduct(raw, index) {
   const buyUrl = typeof raw.buyUrl === 'string' ? raw.buyUrl.trim() : '';
   const detailUrl = typeof raw.detailUrl === 'string' ? raw.detailUrl.trim() : '';
   const specsUrl = typeof raw.specsUrl === 'string' ? raw.specsUrl.trim() : '';
+  const officialPrice = parseNumber(raw.officialPrice);
+  const discountAmount = parseNumber(raw.discountAmount);
+  const finalPrice = parseNumber(raw.finalPrice);
   const parameters = Array.isArray(raw.parameters)
     ? raw.parameters
         .map((item) => {
@@ -172,6 +299,35 @@ function normalizeProduct(raw, index) {
         })
         .filter(Boolean)
     : [];
+  const fullParameters = Array.isArray(raw.fullParameters)
+    ? raw.fullParameters
+        .map((item) => {
+          if (!item || typeof item !== 'object') {
+            return null;
+          }
+          const key = typeof item.name === 'string' ? item.name.trim() : '';
+          const value = typeof item.value === 'string' ? item.value.trim() : '';
+          if (!key || !value) {
+            return null;
+          }
+          return { name: key, value };
+        })
+        .filter(Boolean)
+    : Array.isArray(raw.full_parameters)
+      ? raw.full_parameters
+          .map((item) => {
+            if (!item || typeof item !== 'object') {
+              return null;
+            }
+            const key = typeof item.name === 'string' ? item.name.trim() : '';
+            const value = typeof item.value === 'string' ? item.value.trim() : '';
+            if (!key || !value) {
+              return null;
+            }
+            return { name: key, value };
+          })
+          .filter(Boolean)
+      : [];
 
   return {
     id,
@@ -181,10 +337,14 @@ function normalizeProduct(raw, index) {
     image,
     tag,
     price,
+    officialPrice,
+    discountAmount,
+    finalPrice,
     buyUrl,
     detailUrl,
     specsUrl,
     parameters,
+    fullParameters,
     color: '#ece8df'
   };
 }
@@ -221,10 +381,6 @@ function renderIntentStrip(list) {
     .join('');
 }
 
-function pickPoint(product) {
-  return `→ ${categoryLabel(product.category)} 在售设备`;
-}
-
 function productThumbStyle(product) {
   if (product.image) {
     return `background-color:#ece8df;background-image:url('${safeCssUrl(product.image)}');background-size:cover;background-position:center;`;
@@ -232,13 +388,49 @@ function productThumbStyle(product) {
   return `background:${product.color || '#ece8df'}`;
 }
 
+function feedPriceText(product) {
+  const breakdown = priceBreakdown(product);
+  if (breakdown) {
+    return money(breakdown.final);
+  }
+
+  const official = resolveOfficialPrice(product);
+  if (official && official > 0) {
+    return money(official);
+  }
+
+  const text = money(product.price);
+  if (!text || text === '官网可选配置') {
+    return '价格待更新';
+  }
+
+  return text
+    .replace(/^到手价\s*/u, '')
+    .replace(/^官网价\s*/u, '')
+    .trim();
+}
+
+function productSalesText(product) {
+  const source = String(product?.id || product?.name || '');
+  let hash = 0;
+
+  for (let i = 0; i < source.length; i += 1) {
+    hash = (hash * 31 + source.charCodeAt(i)) % 1000000;
+  }
+
+  const sales = 3000 + (Math.abs(hash) % 5001);
+  return sales.toLocaleString('zh-CN');
+}
+
 function productCardHtml(product) {
   return `
     <article class="assistant-pick" data-open="${product.id}">
       <div class="assistant-pick-thumb" style="${productThumbStyle(product)}"></div>
-      <div class="assistant-pick-point">${escapeHtml(pickPoint(product))}</div>
       <div class="assistant-pick-name">${escapeHtml(product.name)}</div>
-      <div class="assistant-pick-price">${escapeHtml(money(product.price))}</div>
+      <div class="assistant-pick-meta">
+        <div class="assistant-pick-price">${escapeHtml(feedPriceText(product))}</div>
+        <div class="assistant-pick-sales">销量 ${escapeHtml(productSalesText(product))}</div>
+      </div>
     </article>
   `;
 }
@@ -276,44 +468,72 @@ function conversationItemHtml(item, index) {
   `;
 }
 
-function scrollCanvasToConversationTop(index) {
-  const target = dom.conversationStream.querySelector(`.msg-group[data-conv-index="${index}"]`);
+function streamContainers() {
+  return [dom.conversationStream, dom.detailChatStream].filter(Boolean);
+}
+
+function activeConversationStream() {
+  if (state.detailOpen && state.detailChatMode && dom.detailChatStream) {
+    return dom.detailChatStream;
+  }
+  return dom.conversationStream;
+}
+
+function scrollCanvasToConversationTop(streamEl, index) {
+  if (!streamEl) {
+    return;
+  }
+
+  const target = streamEl.querySelector(`.msg-group[data-conv-index="${index}"]`);
   if (!target) {
     return;
   }
 
   const nextTop = Math.max(0, target.offsetTop - 6);
-  dom.conversationStream.scrollTop = nextTop;
+  streamEl.scrollTop = nextTop;
 }
 
 function renderCanvas(options = {}) {
   const { anchorConversationIndex = null } = options;
 
-  if (!state.canvasItems.length) {
-    dom.conversationStream.innerHTML = `
-      <article class="canvas-empty">
-        anna 已在线，你可以直接说「帮我选 iPhone」「我想买轻薄笔记本」「AirPods 哪个适合通勤」。
-      </article>
-    `;
-    return;
-  }
-
-  dom.conversationStream.innerHTML = state.canvasItems
+  const conversationHtml = state.canvasItems
     .map((item, index) => conversationItemHtml(item, index))
     .join('');
 
+  const emptyHtml = `
+    <article class="canvas-empty">
+      anna 已在线，你可以直接说「帮我选 iPhone」「我想买轻薄笔记本」「AirPods 哪个适合通勤」。
+    </article>
+  `;
+
+  if (!state.canvasItems.length) {
+    for (const streamEl of streamContainers()) {
+      streamEl.innerHTML = emptyHtml;
+    }
+    return;
+  }
+
+  for (const streamEl of streamContainers()) {
+    streamEl.innerHTML = conversationHtml;
+  }
+
   if (Number.isInteger(anchorConversationIndex)) {
     window.requestAnimationFrame(() => {
-      scrollCanvasToConversationTop(anchorConversationIndex);
+      for (const streamEl of streamContainers()) {
+        scrollCanvasToConversationTop(streamEl, anchorConversationIndex);
+      }
       window.setTimeout(() => {
-        scrollCanvasToConversationTop(anchorConversationIndex);
+        for (const streamEl of streamContainers()) {
+          scrollCanvasToConversationTop(streamEl, anchorConversationIndex);
+        }
       }, 80);
     });
     return;
   }
 
   window.requestAnimationFrame(() => {
-    dom.conversationStream.scrollTop = dom.conversationStream.scrollHeight;
+    const streamEl = activeConversationStream();
+    streamEl.scrollTop = streamEl.scrollHeight;
   });
 }
 
@@ -351,7 +571,7 @@ function scoreProductByQuery(product, query) {
   return score;
 }
 
-function topProductsByQuery(query, limit = 4) {
+function topProductsByQuery(query, limit = RECOMMENDATION_COUNT) {
   const q = query.trim().toLowerCase();
   if (!q) {
     return products.slice(0, limit);
@@ -369,12 +589,36 @@ function topProductsByQuery(query, limit = 4) {
   return products.slice(0, limit);
 }
 
-function sameCategoryPicks(product, limit = 4) {
+function sameCategoryPicks(product, limit = RECOMMENDATION_COUNT) {
   return products.filter((item) => item.category === product.category && item.id !== product.id).slice(0, limit);
 }
 
-function categoryPicks(category, limit = 4) {
+function categoryPicks(category, limit = RECOMMENDATION_COUNT) {
   return products.filter((item) => item.category === category).slice(0, limit);
+}
+
+function uniqueProductsById(items) {
+  const seen = new Set();
+  const result = [];
+
+  for (const item of items) {
+    if (!item || !item.id || seen.has(item.id)) {
+      continue;
+    }
+    seen.add(item.id);
+    result.push(item);
+  }
+
+  return result;
+}
+
+function detailPicks(selected, extra = []) {
+  return uniqueProductsById([
+    selected,
+    ...extra,
+    ...sameCategoryPicks(selected, RECOMMENDATION_COUNT * 2),
+    ...products
+  ]).slice(0, RECOMMENDATION_COUNT);
 }
 
 function paramSummary(product, take = 3) {
@@ -394,12 +638,12 @@ function buildAnswer(query) {
     if (containsAny(q, ['参数', '规格', '配置', '芯片', '续航', '屏幕'])) {
       return {
         answer: `${selected.name} 的核心参数：${paramSummary(selected)}。`,
-        picks: [selected]
+        picks: detailPicks(selected)
       };
     }
 
     if (containsAny(q, ['对比', '区别', '怎么选', '差异'])) {
-      const picks = [selected, ...sameCategoryPicks(selected, 2)];
+      const picks = detailPicks(selected, sameCategoryPicks(selected, 6));
       return {
         answer: `我给你放了同类别设备做对比，重点看芯片、屏幕和续航这三项会更快做决策。`,
         picks
@@ -409,67 +653,74 @@ function buildAnswer(query) {
     if (containsAny(q, ['适合', '人群', '场景', '通勤', '学习', '办公', '剪辑'])) {
       return {
         answer: `${selected.name} 更适合 ${selected.desc}。你也可以继续告诉我预算和使用场景，我会进一步收敛。`,
-        picks: [selected]
+        picks: detailPicks(selected)
       };
     }
 
     if (containsAny(q, ['价格', '优惠', '多少钱', '预算', '购买'])) {
       const buyHint = selected.buyUrl ? '可直接点开购买入口查看当前配置价格。' : '可进入官网查看实时价格。';
+      const breakdown = priceBreakdown(selected);
+      if (breakdown) {
+        return {
+          answer: `${selected.name} 官网价 ${money(breakdown.official)}，店铺红包 8 折抵扣 ${money(breakdown.discount)}，到手价 ${money(breakdown.final)}。${buyHint}`,
+          picks: detailPicks(selected)
+        };
+      }
       return {
         answer: `${selected.name} 当前展示为「${money(selected.price)}」。${buyHint}`,
-        picks: [selected]
+        picks: detailPicks(selected)
       };
     }
 
     return {
       answer: `关于 ${selected.name}，你可以继续问参数解读、同类对比、适合人群和购买建议。`,
-      picks: [selected]
+      picks: detailPicks(selected)
     };
   }
 
   if (containsAny(q, ['新品', '上新', '最新'])) {
     return {
       answer: '我先给你放一组 Apple 中国官网当前在售的热门新款设备，方便你快速浏览。',
-      picks: products.slice(0, 4)
+      picks: products.slice(0, RECOMMENDATION_COUNT)
     };
   }
 
   if (containsAny(lc, ['iphone', '手机'])) {
     return {
       answer: '下面是当前在售 iPhone 机型，我优先按主流选择放在前面。',
-      picks: categoryPicks('iphone', 4)
+      picks: categoryPicks('iphone', RECOMMENDATION_COUNT)
     };
   }
 
   if (containsAny(lc, ['ipad', '平板'])) {
     return {
       answer: '下面是当前在售 iPad 机型，你可以继续告诉我侧重学习、创作还是娱乐。',
-      picks: categoryPicks('ipad', 4)
+      picks: categoryPicks('ipad', RECOMMENDATION_COUNT)
     };
   }
 
   if (containsAny(lc, ['mac', 'macbook', '电脑', '笔记本'])) {
     return {
       answer: '我先放适合大多数用户的 Mac 设备组合，你可以继续补充预算和性能需求。',
-      picks: categoryPicks('mac', 4)
+      picks: categoryPicks('mac', RECOMMENDATION_COUNT)
     };
   }
 
   if (containsAny(lc, ['watch', '手表'])) {
     return {
       answer: '下面是当前在售 Apple Watch 机型，可继续按运动、健康或续航偏好细分。',
-      picks: categoryPicks('watch', 4)
+      picks: categoryPicks('watch', RECOMMENDATION_COUNT)
     };
   }
 
   if (containsAny(lc, ['airpods', '耳机', '降噪'])) {
     return {
       answer: '我先给你放在售 AirPods 机型，重点可以对比降噪、佩戴和续航。',
-      picks: categoryPicks('airpods', 4)
+      picks: categoryPicks('airpods', RECOMMENDATION_COUNT)
     };
   }
 
-  const matched = topProductsByQuery(q, 4);
+  const matched = topProductsByQuery(q, RECOMMENDATION_COUNT);
   return {
     answer: '已根据你的问题匹配到官网在售设备。你可以继续补充预算、使用场景和偏好，我会进一步收敛。',
     picks: matched
@@ -487,7 +738,7 @@ function normalizeServerPicks(rawPicks) {
     return [];
   }
 
-  return rawPicks
+  const normalized = rawPicks
     .map((pick) => {
       if (typeof pick === 'string') {
         return findProductById(pick);
@@ -499,18 +750,28 @@ function normalizeServerPicks(rawPicks) {
 
       return null;
     })
-    .filter(Boolean)
-    .slice(0, 4);
+    .filter(Boolean);
+
+  return uniqueProductsById(normalized).slice(0, RECOMMENDATION_COUNT);
 }
 
 async function fetchServerAnswer(query) {
+  const recentTurns = state.canvasItems
+    .filter((item) => item.question && item.answer)
+    .slice(-6)
+    .map((item) => ({
+      question: item.question,
+      answer: item.answer
+    }));
+
   const payload = {
     query,
     context: {
       detailOpen: state.detailOpen,
       currentProductId: state.selectedProductId,
       viewedProductIds: state.viewed.map((item) => item.id),
-      allowedProductIds: products.map((item) => item.id)
+      allowedProductIds: products.map((item) => item.id),
+      recentTurns
     }
   };
 
@@ -541,6 +802,10 @@ async function sendIntent(manualText) {
   const text = (manualText || dom.intentInput.value).trim();
   if (!text || state.pending) {
     return;
+  }
+
+  if (state.detailOpen && !state.detailChatMode) {
+    setDetailChatMode(true);
   }
 
   setPending(true);
@@ -584,19 +849,230 @@ function upsertViewed(productId) {
   state.viewed.unshift(viewedItem);
 }
 
-function fillDetailParams(product) {
-  const params = product.parameters.slice(0, 4);
-  dom.sizeRow.innerHTML = params
-    .map((item, index) => `<span class="sz ${index === 1 ? 'rec' : ''}">${escapeHtml(item.name.slice(0, 6) || '参数')}</span>`)
-    .join('');
+function normalizeParamName(rawName) {
+  const cleaned = String(rawName || '')
+    .replace(/\s+/g, ' ')
+    .replace(/[：]/g, ':')
+    .trim();
 
-  if (params.length < 4) {
-    const fillers = ['芯片', '显示', '影像', '续航'].slice(params.length);
-    dom.sizeRow.innerHTML += fillers.map((item) => `<span class="sz">${escapeHtml(item)}</span>`).join('');
+  if (!cleaned) {
+    return '';
   }
 
-  const summary = params.map((item) => `${item.name}：${item.value}`).join('；');
-  dom.sizeNote.textContent = summary || '以下信息来自 Apple 中国官网公开技术规格。';
+  const segments = cleaned
+    .split(':')
+    .map((item) => item.trim())
+    .filter(Boolean);
+  const leaf = segments.length ? segments[segments.length - 1] : cleaned;
+  return leaf.replace(/\s*\d+$/, '').trim();
+}
+
+function normalizeParamValue(rawValue) {
+  const compact = String(rawValue || '')
+    .replace(/\s+/g, ' ')
+    .replace(/^[\/、\-\s]+/, '')
+    .trim();
+
+  if (!compact) {
+    return '';
+  }
+
+  const withoutFootnote = compact
+    .replace(/([A-Za-z\u4e00-\u9fa5])\d+$/u, '$1')
+    .replace(/；$/, '')
+    .trim();
+
+  if (withoutFootnote.length <= 56) {
+    return withoutFootnote;
+  }
+
+  return `${withoutFootnote.slice(0, 56)}...`;
+}
+
+function buildDetailKvList(product) {
+  const compactSources = (product.parameters || []).filter((item) => item && item.name && item.value);
+  const fullSources = (product.fullParameters || []).filter((item) => item && item.name && item.value);
+
+  function localizeKey(rawKey) {
+    const key = String(rawKey || '');
+    if (!key) return '';
+    if (/(屏幕尺寸|显示设备|显示屏尺寸|display size)/i.test(key)) return '屏幕尺寸';
+    if (/(分辨率|resolution)/i.test(key)) return '分辨率';
+    if (/(视网膜|retina|oled|liquid|xdr|显示屏)/i.test(key)) return '显示技术';
+    if (/(chip|cpu|soc|处理器|芯片|bionic|neural)/i.test(key)) return '芯片';
+    if (/(memory|ram|统一内存|内存)/i.test(key)) return '内存';
+    if (/(storage|存储|容量|ssd|硬盘)/i.test(key)) return '存储容量';
+    if (/(battery|电池|续航|视频播放|音频播放|使用时间)/i.test(key)) return '电池续航';
+    if (/(camera|摄像头|相机|主摄|超广角|长焦|前置|后置)/i.test(key)) return '摄像头';
+    if (/(weight|重量)/i.test(key)) return '重量';
+    return normalizeParamName(key);
+  }
+
+  function isMeaningfulValue(key, value) {
+    if (!key || !value) return false;
+    if (value.length < 2) return false;
+    if (/^最长可达$/.test(value)) return false;
+    if (key === '分辨率') {
+      return /(分辨率|resolution)/i.test(value) || /\d{3,5}\s*[x×]\s*\d{3,5}/.test(value);
+    }
+    if (key === '芯片') {
+      return !/^(中央处理器|图形处理器|处理器|统一内存)$/.test(value);
+    }
+    if (key === '电池续航') {
+      return /(小时|h|mAh|Wh|最长可达)/i.test(value);
+    }
+    if (key === '摄像头') {
+      return !/(control|控制)/i.test(value);
+    }
+    return true;
+  }
+
+  function normalizeEntry(item) {
+    const key = localizeKey(item.name);
+    const value = normalizeParamValue(item.value);
+    if (!isMeaningfulValue(key, value)) {
+      return null;
+    }
+    return { key, value };
+  }
+
+  function pushByPriority(queue, picked, usedKeys, maxItems) {
+    for (const preferredKey of queue) {
+      const hit = compactEntries.find((item) => item.key === preferredKey && !usedKeys.has(item.key));
+      if (!hit) {
+        continue;
+      }
+      picked.push(hit);
+      usedKeys.add(hit.key);
+      if (picked.length >= maxItems) {
+        return;
+      }
+    }
+  }
+
+  const compactEntries = compactSources.map((item) => normalizeEntry(item)).filter(Boolean);
+  const fullEntries = fullSources.map((item) => normalizeEntry(item)).filter(Boolean);
+
+  const categoryPriorities = {
+    iphone: ['屏幕尺寸', '分辨率', '芯片', '存储容量', '电池续航', '摄像头', '显示技术', '重量'],
+    ipad: ['屏幕尺寸', '分辨率', '芯片', '存储容量', '电池续航', '摄像头', '显示技术', '重量'],
+    mac: ['屏幕尺寸', '分辨率', '芯片', '内存', '存储容量', '电池续航', '显示技术', '重量'],
+    watch: ['屏幕尺寸', '分辨率', '芯片', '电池续航', '显示技术', '重量'],
+    airpods: ['芯片', '电池续航', '显示技术', '重量'],
+    homepod: ['芯片', '显示技术', '重量'],
+    vision: ['屏幕尺寸', '分辨率', '芯片', '存储容量', '电池续航', '显示技术', '重量']
+  };
+
+  const picked = [];
+  const usedKeys = new Set();
+  const priorityQueue = categoryPriorities[product.category] || [
+    '屏幕尺寸',
+    '分辨率',
+    '芯片',
+    '内存',
+    '存储容量',
+    '电池续航',
+    '摄像头',
+    '显示技术',
+    '重量'
+  ];
+
+  pushByPriority(priorityQueue, picked, usedKeys, 6);
+
+  if (picked.length < 4) {
+    for (const entry of fullEntries) {
+      if (usedKeys.has(entry.key)) {
+        continue;
+      }
+      if (!priorityQueue.includes(entry.key)) {
+        continue;
+      }
+      picked.push(entry);
+      usedKeys.add(entry.key);
+      if (picked.length >= 6) {
+        break;
+      }
+    }
+  }
+
+  if (picked.length < 4) {
+    for (const entry of compactEntries) {
+      if (usedKeys.has(entry.key)) {
+        continue;
+      }
+      picked.push(entry);
+      usedKeys.add(entry.key);
+      if (picked.length >= 6) {
+        break;
+      }
+    }
+  }
+
+  if (!picked.length) {
+    return [];
+  }
+
+  return picked.slice(0, 6);
+}
+
+function fillDetailParams(product) {
+  const kvList = buildDetailKvList(product);
+
+  dom.sizeRow.classList.add('kv-list');
+  dom.sizeRow.innerHTML = kvList.length
+    ? kvList
+        .map(
+          (item) =>
+            `<div class="kv-item"><span class="kv-key">${escapeHtml(item.key)}：</span><span class="kv-value">${escapeHtml(item.value)}</span></div>`
+        )
+        .join('')
+    : '<div class="kv-item"><span class="kv-key">参数：</span><span class="kv-value">官网参数整理中</span></div>';
+
+  dom.sizeNote.textContent = '以上参数来自 Apple 中国官网公开技术规格，已按当前商品自动抽取。';
+}
+
+function renderDetailChatSummary(product) {
+  if (!product) {
+    dom.detailChatThumb.style.background = '#ece8df';
+    dom.detailChatName.textContent = '商品名称';
+    dom.detailChatPrice.textContent = '到手价 待确认';
+    return;
+  }
+
+  if (product.image) {
+    dom.detailChatThumb.style.backgroundColor = '#ece8df';
+    dom.detailChatThumb.style.backgroundImage = `url('${safeCssUrl(product.image)}')`;
+    dom.detailChatThumb.style.backgroundSize = 'cover';
+    dom.detailChatThumb.style.backgroundPosition = 'center';
+  } else {
+    dom.detailChatThumb.style.background = '#ece8df';
+  }
+
+  dom.detailChatName.textContent = product.name;
+
+  const breakdown = priceBreakdown(product);
+  if (breakdown) {
+    dom.detailChatPrice.textContent = `到手价 ${money(breakdown.final)}`;
+  } else {
+    dom.detailChatPrice.textContent = primaryPriceText(product);
+  }
+}
+
+function setDetailChatMode(enabled) {
+  const shouldEnable = Boolean(enabled) && state.detailOpen;
+  state.detailChatMode = shouldEnable;
+  dom.detailOverlay.classList.toggle('chat-mode', shouldEnable);
+
+  if (shouldEnable) {
+    const selected = findProductById(state.selectedProductId);
+    renderDetailChatSummary(selected);
+    dom.intentInput.placeholder = '继续问这件商品：参数、对比、适合人群、购买建议';
+    return;
+  }
+
+  if (state.detailOpen) {
+    dom.intentInput.placeholder = '继续问这台设备：参数、对比、适合人群、购买建议';
+  }
 }
 
 function renderDetail(product) {
@@ -612,7 +1088,17 @@ function renderDetail(product) {
   dom.detailImageLabel.textContent = product.name;
   dom.detailName.textContent = product.name;
   dom.detailInsight.textContent = `${product.name} 的建议：${product.desc}`;
-  dom.buyPrice.textContent = money(product.price);
+  const breakdown = priceBreakdown(product);
+  if (breakdown) {
+    const discountFromOfficial = Math.round(breakdown.official * 0.2);
+    dom.buyPrice.textContent = money(breakdown.final);
+    dom.buyPriceOfficial.textContent = money(breakdown.official);
+    dom.buyPriceBadge.textContent = `店铺红包抵扣${discountFromOfficial}元`;
+  } else {
+    dom.buyPrice.textContent = money(product.price);
+    dom.buyPriceOfficial.textContent = '暂无';
+    dom.buyPriceBadge.textContent = '店铺红包抵扣暂无';
+  }
 
   fillDetailParams(product);
 
@@ -624,11 +1110,13 @@ function renderDetail(product) {
       <article class="bundle-item">
         <div class="bundle-item-thumb" style="${productThumbStyle(item)}"></div>
         <div class="bundle-item-name">${escapeHtml(item.name)}</div>
-        <div class="bundle-item-price">${escapeHtml(money(item.price))}</div>
+        <div class="bundle-item-price">${escapeHtml(primaryPriceText(item))}</div>
       </article>
     `
     )
     .join('');
+
+  renderDetailChatSummary(product);
 }
 
 function openDetail(productId) {
@@ -640,6 +1128,7 @@ function openDetail(productId) {
   state.selectedProductId = product.id;
   state.detailOpen = true;
   state.activeChip = '';
+  setDetailChatMode(false);
 
   closeHistorySheet();
   upsertViewed(product.id);
@@ -648,13 +1137,14 @@ function openDetail(productId) {
 
   dom.detailOverlay.classList.add('open');
   dom.detailOverlay.setAttribute('aria-hidden', 'false');
-  dom.intentInput.placeholder = '继续问这台设备：参数、对比、适合人群、购买建议';
 }
 
 function closeDetail() {
+  state.detailChatMode = false;
   state.detailOpen = false;
   state.activeChip = '';
 
+  dom.detailOverlay.classList.remove('chat-mode');
   dom.detailOverlay.classList.remove('open');
   dom.detailOverlay.setAttribute('aria-hidden', 'true');
   dom.intentInput.placeholder = 'anna 在线，可以问我任何问题';
@@ -722,7 +1212,7 @@ function renderHistorySheet() {
           <div class="sheet-thumb" style="${productThumbStyle(product)}"></div>
           <div>
             <div class="sheet-name">${escapeHtml(product.name)}</div>
-            <div class="sheet-meta">${escapeHtml(money(product.price))} · ${viewed.time} 浏览</div>
+            <div class="sheet-meta">${escapeHtml(primaryPriceText(product))} · ${viewed.time} 浏览</div>
           </div>
           <button type="button" data-open="${product.id}">重看</button>
         </article>
@@ -752,12 +1242,14 @@ function closeHistorySheet() {
 }
 
 function scrollConversationTo(index) {
-  const target = dom.conversationStream.querySelector(`[data-conv-index="${index}"]`);
+  const streamEl = activeConversationStream();
+  const target = streamEl.querySelector(`[data-conv-index="${index}"]`);
   if (!target) {
     return;
   }
 
-  target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const nextTop = Math.max(0, target.offsetTop - 6);
+  streamEl.scrollTo({ top: nextTop, behavior: 'smooth' });
 }
 
 function seedCanvasWelcome() {
@@ -768,7 +1260,7 @@ function seedCanvasWelcome() {
   state.canvasItems.push(
     {
       question: '',
-      answer: 'hi 王同学，欢迎进店。我是你的 Apple 设备导购 anna。我会基于 Apple 中国官网在售知识库给你推荐。',
+      answer: 'hi 王同学，欢迎进店。我是你的 Apple 设备导购 anna。我会根据你的需求帮你挑选合适的商品',
       picks: products.slice(0, 4),
       createdAt: timeLabel()
     },
@@ -782,14 +1274,19 @@ function seedCanvasWelcome() {
 }
 
 function bindEvents() {
-  dom.conversationStream.addEventListener('click', (event) => {
+  const handleOpenFromStream = (event) => {
     const button = event.target.closest('[data-open]');
     if (!button) {
       return;
     }
 
     openDetail(button.dataset.open);
-  });
+  };
+
+  dom.conversationStream.addEventListener('click', handleOpenFromStream);
+  if (dom.detailChatStream) {
+    dom.detailChatStream.addEventListener('click', handleOpenFromStream);
+  }
 
   dom.intentStrip.addEventListener('click', (event) => {
     const target = event.target.closest('[data-intent]');

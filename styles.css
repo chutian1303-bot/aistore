@@ -270,26 +270,42 @@ body {
   border: 1px solid #d5ccbe;
 }
 
-.assistant-pick-point {
-  margin-top: 6px;
-  font-size: 12px;
-  color: var(--green);
-  line-height: 1.35;
-}
-
 .assistant-pick-name {
-  margin-top: 2px;
+  margin-top: 8px;
   font-size: 14px;
   font-weight: 600;
   line-height: 1.35;
-  min-height: 38px;
+  min-height: 0;
   color: #2f2a24;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.assistant-pick-meta {
+  margin-top: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .assistant-pick-price {
-  margin-top: 2px;
-  font-size: 14px;
-  font-weight: 700;
+  margin-top: 0;
+  font-size: 17px;
+  line-height: 1.25;
+  font-weight: 800;
+  color: var(--orange);
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+.assistant-pick-sales {
+  font-size: 12px;
+  color: #8f877d;
+  line-height: 1.25;
+  white-space: nowrap;
 }
 
 .bbot {
@@ -412,6 +428,11 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+.detail-overlay.chat-mode {
+  top: calc(66px + env(safe-area-inset-top));
+  border-radius: 0;
 }
 
 .detail-overlay.open {
@@ -594,6 +615,13 @@ body {
   margin-bottom: 4px;
 }
 
+.size-row.kv-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
 .sz {
   font-size: 13px;
   font-weight: 600;
@@ -607,6 +635,25 @@ body {
 .sz.rec {
   border-color: var(--ink);
   color: var(--ink);
+}
+
+.kv-item {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  padding: 6px 8px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.kv-key {
+  color: #6f675c;
+  font-weight: 700;
+}
+
+.kv-value {
+  color: var(--ink);
+  font-weight: 600;
 }
 
 .size-note {
@@ -663,47 +710,55 @@ body {
 .buy-price-wrap {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .buy-price-main {
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.04;
+  letter-spacing: -0.2px;
+  color: var(--orange);
 }
 
 .buy-price-sub {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   margin-top: 3px;
+  flex-wrap: nowrap;
 }
 
 .buy-price-old {
-  font-size: 12px;
-  color: var(--ink-faint);
+  font-size: 11px;
+  color: #b4ada1;
   text-decoration: line-through;
+  line-height: 1;
 }
 
 .buy-price-badge {
   font-size: 11px;
   font-weight: 700;
-  color: var(--orange);
-  border: 1px solid var(--orange);
-  border-radius: 4px;
-  padding: 0 5px;
+  color: #ff5a00;
+  border: 1px solid #ff5a00;
+  border-radius: 5px;
+  padding: 1px 5px;
+  line-height: 1.15;
+  background: #fff;
+  white-space: nowrap;
 }
 
 .buy-bar-inner {
   display: flex;
-  border-radius: 10px;
+  border-radius: 18px;
   overflow: hidden;
-  height: 34px;
+  height: 40px;
 }
 
 .buy-btn {
-  width: 96px;
+  width: 104px;
   border: none;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   color: #fff;
 }
@@ -713,7 +768,99 @@ body {
 }
 
 .buy-btn.now {
+  background: #ff5a00;
+}
+
+.detail-chat-view {
+  display: none;
+  flex: 1;
+  min-height: 0;
+  background: linear-gradient(180deg, #f8f3ea 0%, #fbf9f4 40%, #faf9f6 100%);
+}
+
+.detail-overlay.chat-mode .ov-scroll,
+.detail-overlay.chat-mode .buy-bar {
+  display: none;
+}
+
+.detail-overlay.chat-mode .detail-chat-view {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-chat-summary {
+  min-height: 84px;
+  max-height: 13dvh;
+  display: grid;
+  grid-template-columns: 58px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(250, 249, 246, 0.98);
+}
+
+.detail-chat-thumb {
+  width: 58px;
+  height: 70px;
+  border-radius: 10px;
+  border: 1px solid #d7cebf;
+  background: #ece8df center / cover no-repeat;
+}
+
+.detail-chat-meta {
+  min-width: 0;
+}
+
+.detail-chat-name {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #2f2a24;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.detail-chat-price {
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--orange);
+}
+
+.detail-chat-actions {
+  display: grid;
+  gap: 4px;
+  width: 94px;
+}
+
+.mini-buy-btn {
+  height: 30px;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.mini-buy-btn.add {
+  background: #ffb400;
+}
+
+.mini-buy-btn.now {
   background: #ff5000;
+}
+
+.detail-chat-canvas {
+  flex: 1;
+  min-height: 0;
+  padding: 10px 10px 8px;
+}
+
+.detail-chat-stream {
+  padding-bottom: 18px;
 }
 
 .history-sheet {
@@ -819,6 +966,11 @@ body {
 
   .detail-overlay {
     top: calc(118px + env(safe-area-inset-top));
+    bottom: calc(102px + env(safe-area-inset-bottom));
+  }
+
+  .detail-overlay.chat-mode {
+    top: calc(66px + env(safe-area-inset-top));
     bottom: calc(102px + env(safe-area-inset-bottom));
   }
 
