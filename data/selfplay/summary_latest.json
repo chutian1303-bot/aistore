@@ -2,21 +2,21 @@
   "startedAt": "2026-04-11T18:43:00.374Z",
   "baseUrl": "https://jnby-ai-store-demo.vercel.app",
   "mode": "local",
-  "totalSessions": 5939,
-  "totalTurns": 26728,
-  "okTurns": 26728,
+  "totalSessions": 5958,
+  "totalTurns": 26815,
+  "okTurns": 26815,
   "failTurns": 0,
   "lowScoreTurns": 0,
-  "avgLatencyMs": 2713,
+  "avgLatencyMs": 2705,
   "avgScore": 96.67,
-  "updatedAt": "2026-04-13T14:03:26.199Z",
+  "updatedAt": "2026-04-13T14:05:02.455Z",
   "latestTurn": {
-    "at": "2026-04-13T14:03:26.198Z",
-    "session": 5940,
+    "at": "2026-04-13T14:05:02.455Z",
+    "session": 5959,
     "turn": 3,
     "query": "如果预算再降 20%，你会换成哪款，为什么？",
-    "detailOpen": false,
-    "currentProductId": null,
+    "detailOpen": true,
+    "currentProductId": "acc-hrvm2",
     "status": 200,
     "ok": true,
     "score": 94,
@@ -24,12 +24,12 @@
       "回复与问题关键词弱相关"
     ],
     "picks": [
-      "acc-mxmc3",
-      "acc-hrwu2",
-      "acc-meq94",
-      "acc-mhxu4"
+      "acc-hrvm2",
+      "acc-hq642",
+      "acc-hrj22",
+      "acc-hs2b2"
     ],
-    "answer": "我先给你推荐 金色链式表带 等 4 款 Apple 在售商品，到手价 ¥2,159。继续告诉我预算和使用场景，我会再收敛。",
-    "latencyMs": 109
+    "answer": "先看结论：AirPods 专用 Belkin 清洁套件 很适合当前需求，到手价 ¥78。重点可关注 官网参数与配件兼容性，你也可以继续问我同类对比。",
+    "latencyMs": 95
   }
 }
